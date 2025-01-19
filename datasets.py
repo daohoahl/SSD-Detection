@@ -21,6 +21,7 @@ class PascalVOCDataset(Dataset):
 
         assert self.split in {'TRAIN', 'TEST'}
 
+        data_folder = "/content/ssd_data"
         self.data_folder = data_folder
         self.keep_difficult = keep_difficult
 
