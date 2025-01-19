@@ -21,11 +21,11 @@ checkpoint = None  # path to model checkpoint, None if none
 batch_size = 32  # batch size 
 workers = 8  # number of workers for loading data in the DataLoader
 print_freq = 200  # print training status every __ batches
-lr = 0.01  # learning rate
+lr = 0.001  # learning rate
 momentum = 0.9  # momentum
 weight_decay = 5e-4  # weight decay
 grad_clip = None  # clip if gradients are exploding
-epochs = 10  # number of epochs to train for
+epochs = 3  # number of epochs to train for
 cudnn.benchmark = True
 
 # Initialize ClearML Task
@@ -131,17 +131,18 @@ def train(train_loader, model, criterion, optimizer, epoch, task):
         start = time.time()
 
         if i % print_freq == 0:
-            print(f'Epoch: [{epoch}][{i}/{len(train_loader)}]\t'
-                  f'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  f'Data Time {data_time.val:.3f} ({data_time.avg:.3f})\t'
-                  f'Loss {losses.val:.4f} ({losses.avg:.4f})\t')
-
+            print('Epoch: [{0}][{1}/{2}]\t'
+                  'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                  'Data Time {data_time.val:.3f} ({data_time.avg:.3f})\t'
+                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(epoch, i, len(train_loader),
+                                                                  batch_time=batch_time,
+                                                                  data_time=data_time, loss=losses))
             # Log metrics to ClearML
-            logger.report_scalar("Loss", "train", losses.avg, epoch * len(train_loader) + i)
-            logger.report_scalar("Batch Time", "train", batch_time.avg, epoch * len(train_loader) + i)
-            logger.report_scalar("Data Time", "train", data_time.avg, epoch * len(train_loader) + i)
+            iteration = epoch * len(train_loader) + i
+            task.get_logger().report_scalar("Loss", "Training", iteration=iteration, value=loss.item())
+            task.get_logger().report_scalar("Time", "Batch Time", iteration=iteration, value=batch_time.val)
+            task.get_logger().report_scalar("Time", "Data Time", iteration=iteration, value=data_time.val)
 
     del predicted_locs, predicted_scores, images, boxes, labels
-
 if __name__ == '__main__':
     main()
